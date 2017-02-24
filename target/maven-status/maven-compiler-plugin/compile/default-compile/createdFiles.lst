@@ -1,0 +1,7 @@
+org\cidarlab\EugeneDesigner\util\CommandlineParser.class
+org\cidarlab\EugeneDesigner\dom\PartType.class
+org\cidarlab\EugeneDesigner\EugeneDesigner.class
+org\cidarlab\EugeneDesigner\util\Utilities.class
+org\cidarlab\EugeneDesigner\util\FileConverter.class
+org\cidarlab\EugeneDesigner\dom\Part.class
+org\cidarlab\EugeneDesigner\adaptors\EugeneSpecification.class
