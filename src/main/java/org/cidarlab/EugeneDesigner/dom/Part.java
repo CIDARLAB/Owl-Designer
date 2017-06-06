@@ -10,19 +10,24 @@ public class Part {
 	@Getter private String name;
 	@Getter private PartType partType;
 	@Getter private String sequence;
+	@Getter private Orientation orientation;
 	
-	public Part(String name, PartType partType, String sequence) throws CompoundNotFoundError{
+	public Part(String name, PartType partType, boolean isReverse, String sequence) throws CompoundNotFoundError{
 		this.name = name;
 		this.partType = partType;	
-		DNASequence seq = new DNASequence(sequence);
-		this.sequence = seq.getSequenceAsString().toUpperCase();
-		
+		if(isReverse){
+			this.orientation = Orientation.REVERSE;
+		} else {
+			this.orientation = Orientation.FORWARD;
+		}
+		DNASequence _seq = new DNASequence(sequence);
+		this.sequence = _seq.getSequenceAsString();
 	}
-
+		
 	@Override
 	public String toString() {
 
-		return "Part [name=" + name + ", partType=" + partType + ", sequence=" + sequence + "]";
+		return "Part [name=" + name + ", partType=" + partType + ", orientation=" + orientation + ", sequence=" + sequence + "]";
 	}
 	
 }

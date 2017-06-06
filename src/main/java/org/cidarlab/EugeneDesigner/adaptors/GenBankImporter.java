@@ -1,17 +1,16 @@
 package org.cidarlab.EugeneDesigner.adaptors;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.biojava3.core.sequence.DNASequence;
 import org.cidarlab.EugeneDesigner.dom.GenBankFeature;
-import org.cidarlab.EugeneDesigner.util.Utilities;
 
 public class GenBankImporter {
-	public final static List<GenBankFeature> analyzeGenBank(String input) {
+	public final static List<GenBankFeature> analyzeGenBank(String input, boolean toExtractNativeRbs) {
         String gbk = input; //turns the file into one big string
         String[] sections = gbk.split("(?=\\n\\p{Upper})"); //cut on "newline Uppercase"
         List<GenBankFeature> gbkList = new ArrayList<>();
@@ -34,17 +33,17 @@ public class GenBankImporter {
         
         
         String[] featureList = featureSectionCOR.split("(?=\\n\\s{5}?\\p{Alpha})");
-        System.out.println("==============FEATURE ARRAY==============");
+        /*System.out.println("==============FEATURE ARRAY==============");
         System.out.println(Arrays.toString(featureList));
         System.out.println("==============SEQUENCE RAW===============");
-        System.out.println(gbkData.get("ORIGIN"));
+        System.out.println(gbkData.get("ORIGIN"));*/
         String dnaSEQUENCE = gbkData.get("ORIGIN").replaceAll("[\\s\\d/]", ""); //removes white spaces, digits, and /
-        System.out.println("==================DNA SEQUENCE============");
+        /*System.out.println("==================DNA SEQUENCE============");
         System.out.println("substring 1-100: " + dnaSEQUENCE.substring(0, 100).toUpperCase()); // entire String cannot be printed out (too long?). 
-        System.out.println("=========================================");
+        System.out.println("=========================================");*/
         String gbkId = gbkData.get("VERSION").split("\\s", 2)[0]; //Version is a better way to get GenBank accession pointing to the right version
-        System.out.println("==================GenBank accession number=====================");
-        System.out.println(gbkId);
+       /* System.out.println("==================GenBank accession number=====================");
+        System.out.println(gbkId);*/
         //String gbkDescr = gbkData.get("DEFINITION"); //to get any DEFINITIONS: organism, gene, description
         //String authors = gbkData.get("AUTHORS"); //AUTHORS are actually stored under key "REFERENCE", not under "AUTHORS" key
         //System.out.println("==================AUTHORS============");
@@ -52,16 +51,15 @@ public class GenBankImporter {
         //System.out.println("=========================================");
         
         if (dnaSEQUENCE.isEmpty()) {
-            System.out.println("ERROR: File " + Utilities.getResourcesFilepath() + "genbank.gb file does not contain a sequence!");
-            return null;
+            System.err.println("ERROR: GenBank input file does not contain a sequence!");
+            System.exit(1);
         }
         
-        System.out.println("=============List of Features===============");
+        //System.out.println("=============List of Features===============");
         for (String feature : featureList) { //for each feature I need: Name, Type, Start, Stop, Direction
             GenBankFeature gbFeature = new GenBankFeature();
             
-            //gbFeature.setForwardColor(SequenceViewerView.familyColorMap.get(SequenceViewerView.FAMILY.unknown));
-            //gbFeature.setReverseColor(SequenceViewerView.familyColorMap.get(SequenceViewerView.FAMILY.unknown));
+            //GenBank accession and version
             gbFeature.setOldAccession(gbkId);
             gbFeature.setFullSequence(dnaSEQUENCE.toUpperCase());
             
@@ -71,6 +69,9 @@ public class GenBankImporter {
             String featureType = splitFeatures[0];
             //System.out.println(featureType);
             gbFeature.setFeatureType(featureType);
+            /*System.out.println(featureType);
+            System.out.println(gbFeature.getFeatureType().toLowerCase());*/
+            
             String featureLengthString = splitFeatures[1];
             //this is all just slicing and dicing to find relevant information for the annotations. 
             if (feature.contains("/gene=")) {
@@ -160,33 +161,24 @@ public class GenBankImporter {
             }	*/
             	
             	
-            	gbFeature.setDnaSequence(dnaSEQUENCE.substring(gbFeature.getStartx()-1, gbFeature.getEndx()).toUpperCase());
-            
-            //This is just for debugging...
-            /*if(gbFeature.getDnaSequence().length() >= 2000 && !gbFeature.isReverseComplement()){
-            	System.out.println("Feature: " + featureType + ", Name: " + featureName + ", Sequence_substring(1-2000): " + gbFeature.getDnaSequence().substring(0, 2000));
-            } else if (gbFeature.getDnaSequence().length() >= 2000 && gbFeature.isReverseComplement()){
-            	String seq = dnaSEQUENCE.substring(gbFeature.getStartx()-1, gbFeature.getEndx()).toUpperCase();
-            	DNASequence dnaS = new DNASequence(seq);
-            	System.out.println("Feature: " + featureType + ", Name: " + featureName + ", Sequence_substring(1-2000): " + dnaS.getReverseComplement().getSequenceAsString().substring(0, 2000));
-            	gbFeature.setDnaSequence(dnaS.getReverseComplement().getSequenceAsString());
-            } else if (gbFeature.getDnaSequence().length() < 2000 && gbFeature.isReverseComplement()){
-            	String seq = dnaSEQUENCE.substring(gbFeature.getStartx()-1, gbFeature.getEndx()).toUpperCase();
-            	DNASequence dnaS = new DNASequence(seq);
-            	System.out.println("Feature: " + featureType + ", Name: " + featureName + ", Sequence: " + dnaS.getReverseComplement().getSequenceAsString());
-            	gbFeature.setDnaSequence(dnaS.getReverseComplement().getSequenceAsString());
-            } else {
-            	System.out.println("Feature: " + featureType + ", Name: " + featureName + ", Sequence: " + gbFeature.getDnaSequence());
-            }*/
+            	gbFeature.setDnaSequence(dnaSEQUENCE.substring(gbFeature.getStartx()-1, gbFeature.getEndx()).toUpperCase(),gbFeature.isReverseComplement());
+          
+           	     
+            	// Fetching native RBS components from GenBank entry
+                if(gbFeature.getFeatureType().toLowerCase().contains("cds") && (toExtractNativeRbs)){
+                	GenBankFeature rbsFeature = new GenBankFeature();
+                	rbsFeature = getNativeRbs(gbFeature);
+                 	if(rbsFeature.getDnaSequence()!=null){
+                		gbkList.add(rbsFeature);
+                	}
+                }
+            	
         }
         
-        /*for (GenBankFeature key : gbkList) {
-            key.setDnaSequence(dnaSEQUENCE.substring(key.getStartx() - 1, key.getEndx()));
-        }*/
         
         return gbkList;
     }
-	
+		
 	public static String stringifyList(List<String> inputs){
 		StringBuilder input = new StringBuilder();
 		for(String l : inputs){
@@ -194,5 +186,50 @@ public class GenBankImporter {
 			//System.out.println(l);
 		}
 		return input.toString();
+	}
+	
+	/** This method takes GenBankFeature object representing CDS component,
+	 *  extracts native RBS sequences 40 nucleotides upstream of CDS components,
+	 *  and returns GenBankFeture objects for RBS component.
+	*/
+	private static GenBankFeature getNativeRbs(GenBankFeature cds){
+		
+		final int rbsSeqRange = 41;
+		final int constructLength = cds.getFullSequence().length();
+		
+		GenBankFeature rbsFeature = new GenBankFeature();
+		
+		rbsFeature.setName("natRBS_"+cds.getName());
+		rbsFeature.setFeatureType("RBS");
+		rbsFeature.setFullSequence(cds.getFullSequence());
+				
+		if(cds.isReverseComplement()){
+			rbsFeature.setReverseComplement(true);
+			if(cds.getEndx()+rbsSeqRange <= constructLength){
+				rbsFeature.setStartx(cds.getEndx()+1);
+				rbsFeature.setEndx(cds.getEndx()+rbsSeqRange);
+				System.out.println("RBS [start=" + rbsFeature.getStartx() + ", end=" + rbsFeature.getEndx() + "]");
+				DNASequence gRbs = new DNASequence(cds.getFullSequence().substring(rbsFeature.getStartx(), rbsFeature.getEndx()));
+				rbsFeature.setDnaSequence(gRbs.getSequenceAsString(),rbsFeature.isReverseComplement());
+			} else {
+				System.err.println("WARNING: native RBS sequence for CDS " + cds.getName() + " is out of bounds. Skipping."
+						+ " Please make sure to include at least 40 nt upstream of that CDS.");
+			}
+
+		} else {
+			rbsFeature.setReverseComplement(false);
+			if(cds.getStartx() >= rbsSeqRange){
+				rbsFeature.setStartx(cds.getStartx()-rbsSeqRange);
+				rbsFeature.setEndx(cds.getStartx()-1);
+				System.out.println("RBS [start=" + rbsFeature.getStartx() + ", end=" + rbsFeature.getEndx() + "]");
+				DNASequence gRbs = new DNASequence(cds.getFullSequence().substring(cds.getStartx()-41, cds.getStartx()-1));
+				rbsFeature.setDnaSequence(gRbs.getSequenceAsString(), rbsFeature.isReverseComplement());
+			} else {
+				System.err.println("WARNING: native RBS sequence for CDS " + cds.getName() + " is out of bounds. Skipping."
+						+ " Please make sure to include at least 40 nt upstream of that CDS.");
+			}
+		}
+		
+		return rbsFeature;
 	}
 }

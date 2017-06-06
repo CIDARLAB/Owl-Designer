@@ -12,9 +12,13 @@ import java.util.Date;
 import java.util.List;
 
 import org.cidarlab.EugeneDesigner.adaptors.EugeneSpecification;
+import org.cidarlab.EugeneDesigner.adaptors.GenBankImporter;
+import org.cidarlab.EugeneDesigner.dom.FileType;
 import org.cidarlab.EugeneDesigner.dom.Part;
 import org.cidarlab.EugeneDesigner.dom.PartType;
 import org.cidarlab.EugeneDesigner.util.CommandlineParser;
+import org.cidarlab.EugeneDesigner.util.FeatureListToPartList;
+import org.cidarlab.EugeneDesigner.util.InputFile;
 import org.cidarlab.EugeneDesigner.util.Utilities;
 
 import com.beust.jcommander.JCommander;
@@ -57,10 +61,7 @@ public class EugeneDesigner {
     	jc.setProgramName("EugeneDesigner");
     	
     	if(cmd.isHelp()){
-    		System.out.println("\n===========================================" + getLogPrefix(cmd.getProjectName()));
-        	jc.usage();
-        	System.out.println("===========================================");
-        	System.exit(0);
+    		getUsage(jc);
     	}
     	
     	File promoters = cmd.getPromoters();
@@ -73,23 +74,34 @@ public class EugeneDesigner {
     		if(cmd.getRibozymes() != null) {
     			ribozymes = cmd.getRibozymes();
     			ribozymeContents = Utilities.getFileLines(ribozymes);
-    			ribozymeList = Utilities.fastaToPart(ribozymeContents, PartType.RIBOZYME);			
+    			
+    			if(InputFile.checkType(ribozymes)==FileType.FASTA){
+    				ribozymeList = Utilities.fastaToPart(ribozymeContents, PartType.RIBOZYME, false);
+    			}
+    			if(InputFile.checkType(ribozymes)==FileType.GBK){
+    				ribozymeList = FeatureListToPartList.convert(GenBankImporter.analyzeGenBank(GenBankImporter.stringifyList(ribozymeContents), false));
+    			}
+    			if(InputFile.checkType(ribozymes)==FileType.SBOL){
+    				//TO-DO: add SBOL converter to Part objects.
+    			}
     		} else {
     			System.err.println(getLogPrefix(cmd.getProjectName()) + " ERROR! \nMust provide \"-i ribozymes.fasta\" when \"-addRybozymes true\"\n");
     			System.exit(1);
     		}
     	}
     	
-    	List<String> promoterContents = Utilities.getFileLines(promoters);
-    	List<String> rbsContents = Utilities.getFileLines(rbs);
-    	List<String> geneContents = Utilities.getFileLines(genes);
-    	List<String> terminatorContents = Utilities.getFileLines(terminators);
-    	
-    	
-    	List<Part> promoterList = Utilities.fastaToPart(promoterContents, PartType.PROMOTER);
-    	List<Part> rbsList = Utilities.fastaToPart(rbsContents, PartType.RBS);
-    	List<Part> geneList = Utilities.fastaToPart(geneContents, PartType.CDS);
-    	List<Part> terminatorList = Utilities.fastaToPart(terminatorContents, PartType.TERMINATOR);
+    	List<Part> promoterList = InputFile.inputToParts(promoters, PartType.PROMOTER, false);
+    	List<Part> rbsList = null;
+    	if(rbs.exists()){
+    		rbsList = InputFile.inputToParts(rbs, PartType.RBS, false);
+    	} else if(cmd.isDoNativeRbs()){
+    		rbsList = InputFile.inputToParts(genes, PartType.CDS, true);
+    	} else {
+    		System.err.println("Please either provide RBS components in .fasta file or use -getRbs parameter and a GenBank input file containing gene cluster");
+    		getUsage(jc);
+    	}
+    	List<Part> geneList = InputFile.inputToParts(genes, PartType.CDS, false);
+    	List<Part> terminatorList = InputFile.inputToParts(terminators, PartType.TERMINATOR, false);
     	
     	String script = EugeneSpecification.createEugeneScript(promoterList, ribozymeList, rbsList, geneList, terminatorList, cmd.isWithRybozyme(), cmd.getDesignMethod());
     
@@ -113,6 +125,13 @@ public class EugeneDesigner {
 
         return "[JIRA: " + project +"] " + formatter.format(new Date(System.currentTimeMillis())) + " ";
 
+    }
+    
+    private static void getUsage(JCommander jc){
+		System.out.println("\n===========================================");
+    	jc.usage();
+    	System.out.println("===========================================");
+    	System.exit(0);
     }
     
 }

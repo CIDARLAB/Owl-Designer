@@ -32,7 +32,7 @@ public class Utilities {
 		return path;
 	}
 	
-	public static List<Part> fastaToPart(List<String> fastaLines, PartType type) {
+	public static List<Part> fastaToPart(List<String> fastaLines, PartType type, boolean isReverse) {
         List<Part> partList = new ArrayList<>();
         String name = "";
         String seq = "";
@@ -40,9 +40,9 @@ public class Utilities {
 
             if (line.startsWith(">") && (line.trim().length() > 1)) {
                 if (!seq.isEmpty() && !name.isEmpty()) {
-                        Part part = new Part(name, type, seq);
-                        partList.add(part);
-                        seq = "";
+                	Part part = new Part(name, type, isReverse, seq);
+                	partList.add(part);
+                    seq = "";
                 }
                 name = line.substring(1);
             } else {
@@ -50,7 +50,7 @@ public class Utilities {
             }
         }
         if (!name.isEmpty() && !seq.isEmpty()) {
-        	Part part = new Part(name, type, seq);
+        	Part part = new Part(name, type, isReverse, seq);
             partList.add(part);
         }
         return partList;

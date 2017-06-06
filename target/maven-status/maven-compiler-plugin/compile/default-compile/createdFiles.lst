@@ -1,7 +1,15 @@
+org\cidarlab\EugeneDesigner\dom\GenBankFile.class
+org\cidarlab\EugeneDesigner\util\FeatureListToPartList.class
 org\cidarlab\EugeneDesigner\util\CommandlineParser.class
 org\cidarlab\EugeneDesigner\dom\PartType.class
-org\cidarlab\EugeneDesigner\EugeneDesigner.class
 org\cidarlab\EugeneDesigner\util\Utilities.class
-org\cidarlab\EugeneDesigner\util\FileConverter.class
 org\cidarlab\EugeneDesigner\dom\Part.class
+org\cidarlab\EugeneDesigner\adaptors\GenBankImporter.class
 org\cidarlab\EugeneDesigner\adaptors\EugeneSpecification.class
+org\cidarlab\EugeneDesigner\adaptors\SbolImporter.class
+org\cidarlab\EugeneDesigner\dom\FileType.class
+org\cidarlab\EugeneDesigner\util\InputFile.class
+org\cidarlab\EugeneDesigner\dom\GenBankFeature.class
+org\cidarlab\EugeneDesigner\dom\Orientation.class
+org\cidarlab\EugeneDesigner\EugeneDesigner.class
+org\cidarlab\EugeneDesigner\util\FileConverter.class

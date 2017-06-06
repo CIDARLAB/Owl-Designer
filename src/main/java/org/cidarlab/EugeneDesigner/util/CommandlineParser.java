@@ -9,6 +9,9 @@ public class CommandlineParser {
 	@Parameter(names = "-addRibozymes", description = "add optional ribozymes {true | false}", arity=1)
 	@Getter private boolean withRybozyme = false;
 	
+	@Parameter(names = "-nativeRbs", description = "extract native RBS sequences 40 nt upstream of each gene", arity=1)
+	@Getter private boolean doNativeRbs = false;
+	
 	@Parameter(names = "-design", description = "Design method")
 	@Getter private String designMethod;
 	

@@ -1,2 +1,4 @@
 org\cidarlab\EugeneDesigner\test\AppTest.class
+org\cidarlab\EugeneDesigner\test\InputFileTest.class
 org\cidarlab\EugeneDesigner\test\CommandLineTest.class
+org\cidarlab\EugeneDesigner\test\GenBankImporterTest.class
